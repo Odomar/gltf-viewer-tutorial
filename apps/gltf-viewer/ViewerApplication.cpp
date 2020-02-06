@@ -13,6 +13,8 @@
 #include <stb_image_write.h>
 #include <tiny_gltf.h>
 
+using namespace std;
+
 void keyCallback(
 		GLFWwindow * window, int key, int scancode, int action, int mods) {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
@@ -53,7 +55,9 @@ int ViewerApplication::run() {
 	}
 
 	tinygltf::Model model;
-	// TODO Loading the glTF file
+	if(!loadGltfFile(model)) {
+		return 1;
+	}
 
 	// TODO Creation of Buffer Objects
 
@@ -178,4 +182,22 @@ ViewerApplication::ViewerApplication(const fs::path & appPath, uint32_t width,
 	glfwSetKeyCallback(m_GLFWHandle.window(), keyCallback);
 
 	printGLVersion();
+}
+
+bool ViewerApplication::loadGltfFile(tinygltf::Model & model) {
+	string err;
+	string warn;
+	tinygltf::TinyGLTF loader;
+
+	bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, m_gltfFilePath);
+
+	if (!warn.empty()) {
+		printf("Warning : %s\n", warn.c_str());
+	}
+
+	if (!err.empty()) {
+		printf("Error : %s\n", err.c_str());
+	}
+
+	return ret;
 }
