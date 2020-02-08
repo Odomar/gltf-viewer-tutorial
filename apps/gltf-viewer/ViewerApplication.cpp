@@ -9,6 +9,7 @@
 #include <glm/gtx/io.hpp>
 
 #include "utils/cameras.hpp"
+#include "utils/gltf.hpp"
 
 #include <stb_image_write.h>
 #include <tiny_gltf.h>
@@ -82,12 +83,50 @@ int ViewerApplication::run() {
 		// We use a std::function because a simple lambda cannot be recursive
 		const std::function<void(int, const glm::mat4 &)> drawNode =
 			[&](int nodeIdx, const glm::mat4 & parentMatrix) {
-				// TODO The drawNode function
+				tinygltf::Node & node = model.nodes[nodeIdx];
+				glm::mat4 modelMatrix = getLocalToWorldMatrix(node, parentMatrix);
+				if (node.mesh >= 0) {
+					glm::mat4 modelViewMatrix = viewMatrix * modelMatrix;
+					glm::mat4 modelViewProjMatrix = projMatrix * modelViewMatrix;
+					glm::mat4 normalMatrix = transpose(inverse(modelViewMatrix));
+
+					glUniformMatrix4fv(modelViewMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelViewMatrix));
+					glUniformMatrix4fv(modelViewProjMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelViewProjMatrix));
+					glUniformMatrix4fv(normalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+
+					tinygltf::Mesh & mesh = model.meshes[node.mesh];
+					VaoRange & range = indexToVaoRange[node.mesh];
+					for(int i = 0; i < mesh.primitives.size(); i++) {
+						GLuint vao = vaos[range.begin + i];
+						const tinygltf::Primitive & prim = mesh.primitives[i];
+						glBindVertexArray(vao);
+
+						if(prim.indices >= 0) {
+							// glDrawElements
+							const tinygltf::Accessor accessor = model.accessors[prim.indices];
+							const tinygltf::BufferView bufferView = model.bufferViews[accessor.bufferView];
+							const size_t byteOffset = accessor.byteOffset + bufferView.byteOffset;
+							glDrawElements(prim.mode, accessor.count, accessor.componentType, (GLvoid *) byteOffset);
+						}
+						else {
+							// glDrawArrays
+							const int accessorIdx = (*begin(prim.attributes)).second;
+							const tinygltf::Accessor &accessor = model.accessors[accessorIdx];
+							glDrawArrays(prim.mode, 0, accessor.count);
+						}
+					}
+				}
+				for (const auto & child : node.children) {
+					drawNode(child, modelMatrix);
+				}
 			};
 
 		// Draw the scene referenced by gltf file
 		if (model.defaultScene >= 0) {
 			// TODO Draw all nodes
+			for (const auto & node : model.scenes[model.defaultScene].nodes) {
+				drawNode(node, glm::mat4(1));
+			}
 		}
 	};
 
