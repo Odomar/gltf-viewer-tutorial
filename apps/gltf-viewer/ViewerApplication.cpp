@@ -64,7 +64,7 @@ int ViewerApplication::run() {
 	}
 
 	std::vector<GLuint> vbos = createBufferObjects(model);
-	vector<VaoRange> indexToVaoRange;
+	std::vector<VaoRange> indexToVaoRange;
 	std::vector<GLuint> vaos = createVertexArrayObjects(model, vbos, indexToVaoRange);
 
 	// Setup OpenGL state for rendering
@@ -223,11 +223,11 @@ std::vector<GLuint>
 ViewerApplication::createVertexArrayObjects(const tinygltf::Model & model, const std::vector<GLuint> & bufferObjects,
 											vector<VaoRange> & meshIndexToVaoRange) {
 	std::vector<GLuint> vaos;
-
+	meshIndexToVaoRange.resize(model.meshes.size());
 	for(int i = 0; i < model.meshes.size(); i++) {
 		const int vaoOffset = vaos.size();
 		const int primitivesSize = model.meshes[i].primitives.size();
-		vaos.resize(model.meshes[i].primitives.size());
+		vaos.resize(vaoOffset + primitivesSize);
 		meshIndexToVaoRange.push_back(VaoRange{vaoOffset, primitivesSize});
 
 		glGenVertexArrays(primitivesSize, &vaos[i]);
@@ -238,11 +238,11 @@ ViewerApplication::createVertexArrayObjects(const tinygltf::Model & model, const
 				const auto iterator = model.meshes[i].primitives[j].attributes.find("POSITION");
 				if (iterator != end(model.meshes[i].primitives[j].attributes)) { // If "POSITION" has been found in the map
 					// (*iterator).first is the key "POSITION", (*iterator).second is the value, ie. the index of the accessor for this attribute
-					const auto accessorIdx = (*iterator).second;
-					const auto &accessor = model.accessors[accessorIdx]; // get the correct tinygltf::Accessor from model.accessors
-					const auto &bufferView = model.bufferViews[accessor.bufferView]; // get the correct tinygltf::BufferView from model.bufferViews.
-					const auto bufferIdx = bufferView.buffer; // get the index of the buffer used by the bufferView
-					const auto bufferObject = bufferObjects[bufferIdx]; // get the correct buffer object from the buffer index
+					const int accessorIdx = (*iterator).second;
+					const tinygltf::Accessor &accessor = model.accessors[accessorIdx]; // get the correct tinygltf::Accessor from model.accessors
+					const tinygltf::BufferView &bufferView = model.bufferViews[accessor.bufferView]; // get the correct tinygltf::BufferView from model.bufferViews.
+					const int bufferIdx = bufferView.buffer; // get the index of the buffer used by the bufferView
+					const GLuint bufferObject = bufferObjects[bufferIdx]; // get the correct buffer object from the buffer index
 
 					// Enable the vertex attrib array corresponding to POSITION with glEnableVertexAttribArray
 					glEnableVertexAttribArray(VERTEX_ATTRIB_POSITION_IDX);
@@ -261,11 +261,11 @@ ViewerApplication::createVertexArrayObjects(const tinygltf::Model & model, const
 				const auto iterator = model.meshes[i].primitives[j].attributes.find("NORMAL");
 				if (iterator != end(model.meshes[i].primitives[j].attributes)) { // If "NORMAL" has been found in the map
 					// (*iterator).first is the key "NORMAL", (*iterator).second is the value, ie. the index of the accessor for this attribute
-					const auto accessorIdx = (*iterator).second;
-					const auto &accessor = model.accessors[accessorIdx]; // get the correct tinygltf::Accessor from model.accessors
-					const auto &bufferView = model.bufferViews[accessor.bufferView]; // get the correct tinygltf::BufferView from model.bufferViews.
-					const auto bufferIdx = bufferView.buffer; // get the index of the buffer used by the bufferView
-					const auto bufferObject = bufferObjects[bufferIdx]; // get the correct buffer object from the buffer index
+					const int accessorIdx = (*iterator).second;
+					const tinygltf::Accessor &accessor = model.accessors[accessorIdx]; // get the correct tinygltf::Accessor from model.accessors
+					const tinygltf::BufferView &bufferView = model.bufferViews[accessor.bufferView]; // get the correct tinygltf::BufferView from model.bufferViews.
+					const int bufferIdx = bufferView.buffer; // get the index of the buffer used by the bufferView
+					const GLuint bufferObject = bufferObjects[bufferIdx]; // get the correct buffer object from the buffer index
 
 					// Enable the vertex attrib array corresponding to NORMAL with glEnableVertexAttribArray
 					glEnableVertexAttribArray(VERTEX_ATTRIB_NORMAL_IDX);
@@ -284,11 +284,11 @@ ViewerApplication::createVertexArrayObjects(const tinygltf::Model & model, const
 				const auto iterator = model.meshes[i].primitives[j].attributes.find("TEXCOORD_0");
 				if (iterator != end(model.meshes[i].primitives[j].attributes)) { // If "TEXCOORD_0" has been found in the map
 					// (*iterator).first is the key "TEXCOORD_0", (*iterator).second is the value, ie. the index of the accessor for this attribute
-					const auto accessorIdx = (*iterator).second;
-					const auto &accessor = model.accessors[accessorIdx]; // get the correct tinygltf::Accessor from model.accessors
-					const auto &bufferView = model.bufferViews[accessor.bufferView]; // get the correct tinygltf::BufferView from model.bufferViews.
-					const auto bufferIdx = bufferView.buffer; // get the index of the buffer used by the bufferView
-					const auto bufferObject = bufferObjects[bufferIdx]; // get the correct buffer object from the buffer index
+					const int accessorIdx = (*iterator).second;
+					const tinygltf::Accessor &accessor = model.accessors[accessorIdx]; // get the correct tinygltf::Accessor from model.accessors
+					const tinygltf::BufferView &bufferView = model.bufferViews[accessor.bufferView]; // get the correct tinygltf::BufferView from model.bufferViews.
+					const int bufferIdx = bufferView.buffer; // get the index of the buffer used by the bufferView
+					const GLuint bufferObject = bufferObjects[bufferIdx]; // get the correct buffer object from the buffer index
 
 					// Enable the vertex attrib array corresponding to TEXCOORD_0 with glEnableVertexAttribArray
 					glEnableVertexAttribArray(VERTEX_ATTRIB_TEXCOORD0_IDX);
@@ -303,10 +303,11 @@ ViewerApplication::createVertexArrayObjects(const tinygltf::Model & model, const
 				}
 			}
 			if (model.meshes[i].primitives[j].indices >= 0) {
-				const auto &accessor = model.accessors[model.meshes[i].primitives[j].indices]; // get the correct tinygltf::Accessor from model.accessors
-				const auto &bufferView = model.bufferViews[accessor.bufferView]; // get the correct tinygltf::BufferView from model.bufferViews.
-				const auto bufferIdx = bufferView.buffer; // get the index of the buffer used by the bufferView
-				const auto bufferObject = bufferObjects[bufferIdx]; // get the correct buffer object from the buffer index
+				const int accessorIdx = model.meshes[i].primitives[j].indices;
+				const tinygltf::Accessor &accessor = model.accessors[accessorIdx]; // get the correct tinygltf::Accessor from model.accessors
+				const tinygltf::BufferView &bufferView = model.bufferViews[accessor.bufferView]; // get the correct tinygltf::BufferView from model.bufferViews.
+				const int bufferIdx = bufferView.buffer; // get the index of the buffer used by the bufferView
+				const GLuint bufferObject = bufferObjects[bufferIdx]; // get the correct buffer object from the buffer index
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferObject);
 			}
 		}
