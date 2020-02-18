@@ -26,6 +26,7 @@ option(GLFW_BUILD_TESTS OFF)
 option(GLFW_BUILD_EXAMPLES OFF)
 add_subdirectory(third-party/${GLFW_DIR})
 
+set(OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL REQUIRED)
 
 if(GLMLV_USE_BOOST_FILESYSTEM)
