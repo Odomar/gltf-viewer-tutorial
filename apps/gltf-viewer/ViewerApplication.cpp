@@ -41,28 +41,48 @@ int ViewerApplication::run() {
 	const auto normalMatrixLocation =
 			glGetUniformLocation(glslProgram.glId(), "uNormalMatrix");
 
+	tinygltf::Model model;
+	if(!loadGltfFile(model)) {
+		return 1;
+	}
+
+	glm::vec3 bboxMin, bboxMax;
+	computeSceneBounds(model, bboxMin, bboxMax);
+
+	// center is (min + max) / 2
+	glm::vec3 center = (bboxMin + bboxMax) * glm::vec3(0.5, 0.5, 0.5);
+
+	// diagonal is max - min
+	glm::vec3 diagonal = bboxMax - bboxMin;
+
+	// eye is center + diagonal
+	glm::vec3 eye = center + diagonal;
+
+	// up is (0, 1, 0)
+	glm::vec3 up(0, 1, 0);
+
+	// scene is flat on Z if X and Y coordinate are the same for bounds
+	if (bboxMin.x == bboxMax.x && bboxMin.y == bboxMax.y) {
+		eye = center + 2.f * glm::cross(diagonal, up);
+	}
+
 	// Build projection matrix
-	auto maxDistance = 500.f; // TODO use scene bounds instead to compute this
+	float maxDistance = glm::length(diagonal); // TODO use scene bounds instead to compute this
 	maxDistance = maxDistance > 0.f ? maxDistance : 100.f;
-	const auto projMatrix =
+	const glm::mat4 projMatrix =
 			glm::perspective(70.f, float(m_nWindowWidth) / m_nWindowHeight,
 							 0.001f * maxDistance, 1.5f * maxDistance);
 
 	// TODO Implement a new CameraController model and use it instead. Propose the
 	// choice from the GUI
 	FirstPersonCameraController cameraController{
-			m_GLFWHandle.window(), 0.5f * maxDistance};
+			m_GLFWHandle.window(), 1.f * maxDistance};
 	if (m_hasUserCamera) {
 		cameraController.setCamera(m_userCamera);
 	} else {
 		// TODO Use scene bounds to compute a better default camera
 		cameraController.setCamera(
-				Camera{glm::vec3(0, 0, 0), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0)});
-	}
-
-	tinygltf::Model model;
-	if(!loadGltfFile(model)) {
-		return 1;
+				Camera{eye, center, up});
 	}
 
 	std::vector<GLuint> vbos = createBufferObjects(model);
@@ -124,7 +144,6 @@ int ViewerApplication::run() {
 
 		// Draw the scene referenced by gltf file
 		if (model.defaultScene >= 0) {
-			// TODO Draw all nodes
 			for (const auto & node : model.scenes[model.defaultScene].nodes) {
 				drawNode(node, glm::mat4(1));
 			}
