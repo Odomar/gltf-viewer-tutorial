@@ -166,6 +166,22 @@ bool TrackballCameraController::update(float elapsedTime) {
 
 	else {
 		// rotate
+		const glm::vec3 depthAxis = m_camera.eye() - m_camera.center();
+
+		float radians = 0.01f * cursorDelta.y;
+		const glm::vec3 left = cross(m_camera.up(), depthAxis);
+		const glm::mat4 tiltMatrix = glm::rotate(glm::mat4(1), radians, left);
+		const glm::vec3 newFront = glm::vec3(tiltMatrix * glm::vec4(depthAxis, 0.f));
+
+		radians = 0.01f * cursorDelta.x;
+		const glm::vec3 up = m_camera.up();
+		const glm::mat4 panMatrix = glm::rotate(glm::mat4(1), radians, up);
+		const glm::vec3 finalDepthAxis = glm::vec3(panMatrix * glm::vec4(newFront, 0.f));
+
+		const glm::vec3 newEye = m_camera.center() + finalDepthAxis;
+		m_camera = Camera(newEye, m_camera.center(), m_worldUpAxis);
+
+		return true;
 	}
 
 	return false;
