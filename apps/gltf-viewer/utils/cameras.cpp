@@ -131,6 +131,13 @@ bool TrackballCameraController::update(float elapsedTime) {
 
 	if (glfwGetKey(m_pWindow, GLFW_KEY_LEFT_SHIFT)) {
 		// pan
+		float xPan = cursorDelta.x * 0.001f;
+		float yPan = cursorDelta.y * 0.001f;
+		if (xPan == 0 && yPan == 0) {
+			return false;
+		}
+		m_camera.moveLocal(xPan, yPan, 0);
+		return true;
 	}
 
 	else if (glfwGetKey(m_pWindow, GLFW_KEY_LEFT_CONTROL)) {
