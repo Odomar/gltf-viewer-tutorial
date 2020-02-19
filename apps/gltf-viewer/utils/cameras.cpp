@@ -107,4 +107,39 @@ bool FirstPersonCameraController::update(float elapsedTime)
   return true;
 }
 
-bool TrackballCameraController::update(float elapsedTime) { return false; }
+bool TrackballCameraController::update(float elapsedTime) {
+	if (glfwGetMouseButton(m_pWindow, GLFW_MOUSE_BUTTON_MIDDLE) &&
+		!m_MiddleButtonPressed) {
+		m_MiddleButtonPressed = true;
+		glfwGetCursorPos(
+				m_pWindow, &m_LastCursorPosition.x, &m_LastCursorPosition.y);
+	} else if (!glfwGetMouseButton(m_pWindow, GLFW_MOUSE_BUTTON_MIDDLE) &&
+			   m_MiddleButtonPressed) {
+		m_MiddleButtonPressed = false;
+	}
+
+	const glm::vec2 cursorDelta = ([&]() {
+		if (m_MiddleButtonPressed) {
+			dvec2 cursorPosition;
+			glfwGetCursorPos(m_pWindow, &cursorPosition.x, &cursorPosition.y);
+			const auto delta = cursorPosition - m_LastCursorPosition;
+			m_LastCursorPosition = cursorPosition;
+			return delta;
+		}
+		return dvec2(0);
+	})();
+
+	if (glfwGetKey(m_pWindow, GLFW_KEY_LEFT_SHIFT)) {
+		// pan
+	}
+
+	else if (glfwGetKey(m_pWindow, GLFW_KEY_LEFT_CONTROL)) {
+ 		// zoom
+	}
+
+	else {
+		// rotate
+	}
+
+	return false;
+}
