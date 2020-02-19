@@ -142,6 +142,26 @@ bool TrackballCameraController::update(float elapsedTime) {
 
 	else if (glfwGetKey(m_pWindow, GLFW_KEY_LEFT_CONTROL)) {
  		// zoom
+		float yZoom = cursorDelta.y * 0.001f;
+		if (yZoom == 0) {
+			return false;
+		}
+		const glm::vec3 viewVector = m_camera.center() - m_camera.eye();
+		const float len = glm::length(viewVector);
+		if (yZoom > 0.f) {
+			// We don't want to move more that the length of the view vector (cannot
+			// go beyond target)
+			yZoom = glm::min(yZoom, len - 1e-4f);
+		}
+		// Normalize view vector for the translation
+		const glm::vec3 front = viewVector / len;
+		const glm::vec3 translationVector = yZoom * front;
+
+		// Update camera with new eye position
+		const glm::vec3 newEye = m_camera.eye() + translationVector;
+		m_camera = Camera(newEye, m_camera.center(), m_worldUpAxis);
+
+		return true;
 	}
 
 	else {
