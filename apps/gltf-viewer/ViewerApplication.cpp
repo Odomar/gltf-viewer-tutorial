@@ -67,7 +67,7 @@ int ViewerApplication::run() {
 	}
 
 	// Build projection matrix
-	float maxDistance = glm::length(diagonal); // TODO use scene bounds instead to compute this
+	float maxDistance = glm::length(diagonal);
 	maxDistance = maxDistance > 0.f ? maxDistance : 100.f;
 	const glm::mat4 projMatrix =
 			glm::perspective(70.f, float(m_nWindowWidth) / m_nWindowHeight,
@@ -75,14 +75,11 @@ int ViewerApplication::run() {
 
 	// TODO Implement a new CameraController model and use it instead. Propose the
 	// choice from the GUI
-//	FirstPersonCameraController cameraController{
-	TrackballCameraController cameraController{
-			m_GLFWHandle.window(), 1.f * maxDistance};
+	std::unique_ptr<CameraController> cameraController = std::make_unique<TrackballCameraController>(m_GLFWHandle.window(), 1.f * maxDistance);
 	if (m_hasUserCamera) {
-		cameraController.setCamera(m_userCamera);
+		cameraController -> setCamera(m_userCamera);
 	} else {
-		// TODO Use scene bounds to compute a better default camera
-		cameraController.setCamera(
+		cameraController -> setCamera(
 				Camera{eye, center, up});
 	}
 
@@ -154,7 +151,7 @@ int ViewerApplication::run() {
 	if (!m_OutputPath.empty()) {
 		std::vector<unsigned char> pixels(m_nWindowWidth * m_nWindowHeight * 3);
 		renderToImage(m_nWindowWidth, m_nWindowHeight, 3, pixels.data(), [&]() {
-			drawScene(cameraController.getCamera());
+			drawScene(cameraController -> getCamera());
 		});
 		flipImageYAxis(m_nWindowWidth, m_nWindowHeight, 3, pixels.data());
 		const auto strPath = m_OutputPath.string();
@@ -167,7 +164,7 @@ int ViewerApplication::run() {
 		 ++iterationCount) {
 		const auto seconds = glfwGetTime();
 
-		const auto camera = cameraController.getCamera();
+		const auto camera = cameraController -> getCamera();
 		drawScene(camera);
 
 		// GUI code:
@@ -211,7 +208,7 @@ int ViewerApplication::run() {
 		auto guiHasFocus =
 				ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard;
 		if (!guiHasFocus) {
-			cameraController.update(float(ellapsedTime));
+			cameraController -> update(float(ellapsedTime));
 		}
 
 		m_GLFWHandle.swapBuffers(); // Swap front and back buffers
