@@ -333,7 +333,6 @@ ViewerApplication::createVertexArrayObjects(const tinygltf::Model & model, const
 					glBindBuffer(GL_ARRAY_BUFFER, bufferObject);
 
 					const auto byteOffset = accessor.byteOffset + bufferView.byteOffset;// Compute the total byte offset using the accessor and the buffer view
-					// TODO Call glVertexAttribPointer with the correct arguments.
 					glVertexAttribPointer(VERTEX_ATTRIB_POSITION_IDX, accessor.type, accessor.componentType, GL_FALSE, bufferView.byteStride, (void *)byteOffset);
 					// Remember size is obtained with accessor.type, type is obtained with accessor.componentType.
 					// The stride is obtained in the bufferView, normalized is always GL_FALSE, and pointer is the byteOffset (don't forget the cast).
@@ -356,7 +355,6 @@ ViewerApplication::createVertexArrayObjects(const tinygltf::Model & model, const
 					glBindBuffer(GL_ARRAY_BUFFER, bufferObject);
 
 					const auto byteOffset = accessor.byteOffset + bufferView.byteOffset;// Compute the total byte offset using the accessor and the buffer view
-					// TODO Call glVertexAttribPointer with the correct arguments.
 					glVertexAttribPointer(VERTEX_ATTRIB_NORMAL_IDX, accessor.type, accessor.componentType, GL_FALSE, bufferView.byteStride, (void *)byteOffset);
 					// Remember size is obtained with accessor.type, type is obtained with accessor.componentType.
 					// The stride is obtained in the bufferView, normalized is always GL_FALSE, and pointer is the byteOffset (don't forget the cast).
@@ -379,7 +377,6 @@ ViewerApplication::createVertexArrayObjects(const tinygltf::Model & model, const
 					glBindBuffer(GL_ARRAY_BUFFER, bufferObject);
 
 					const auto byteOffset = accessor.byteOffset + bufferView.byteOffset;// Compute the total byte offset using the accessor and the buffer view
-					// TODO Call glVertexAttribPointer with the correct arguments.
 					glVertexAttribPointer(VERTEX_ATTRIB_TEXCOORD0_IDX, accessor.type, accessor.componentType, GL_FALSE, bufferView.byteStride, (void *)byteOffset);
 					// Remember size is obtained with accessor.type, type is obtained with accessor.componentType.
 					// The stride is obtained in the bufferView, normalized is always GL_FALSE, and pointer is the byteOffset (don't forget the cast).
