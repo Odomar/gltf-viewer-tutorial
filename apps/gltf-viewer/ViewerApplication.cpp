@@ -88,6 +88,25 @@ int ViewerApplication::run() {
 	std::vector<GLuint> vbos = createBufferObjects(model);
 	std::vector<VaoRange> indexToVaoRange;
 	std::vector<GLuint> vaos = createVertexArrayObjects(model, vbos, indexToVaoRange);
+	std::vector<GLuint> tos = createTextureObjects(model);
+
+	GLuint whiteTexture;
+	float white[4] = {1, 1, 1, 1};
+	// Generate the texture object
+	glGenTextures(1, &whiteTexture);
+
+	glBindTexture(GL_TEXTURE_2D, whiteTexture); // Bind to target GL_TEXTURE_2D
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0,
+				 GL_RGBA, GL_FLOAT, white); // Set image data
+	// Set sampling parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// Set wrapping parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glm::vec3 lightDirection(1, 1, 1);
 	glm::vec3 lightIntensity(1, 1, 1);
@@ -436,4 +455,45 @@ ViewerApplication::createVertexArrayObjects(const tinygltf::Model & model, const
 	}
 	glBindVertexArray(0);
 	return vaos;
+}
+
+std::vector<GLuint> ViewerApplication::createTextureObjects(const tinygltf::Model & model) const {
+	std::vector<GLuint> textureObjects(model.textures.size(), 0);
+	glGenTextures(textureObjects.size(), textureObjects.data());
+
+	tinygltf::Sampler defaultSampler;
+	defaultSampler.minFilter = GL_LINEAR;
+	defaultSampler.magFilter = GL_LINEAR;
+	defaultSampler.wrapS = GL_REPEAT;
+	defaultSampler.wrapT = GL_REPEAT;
+	defaultSampler.wrapR = GL_REPEAT;
+
+	for (int i = 0; i < model.textures.size(); i++) {
+		glBindTexture(GL_TEXTURE_2D, textureObjects[i]);
+		// Assume a texture object has been created and bound to GL_TEXTURE_2D
+		const tinygltf::Texture & texture = model.textures[i]; // get i-th texture
+		const tinygltf::Image & image = model.images[texture.source]; // get the image
+
+		// fill the texture object with the data from the image
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0,
+					 GL_RGBA, image.pixel_type, image.image.data());
+
+		const tinygltf::Sampler & sampler = texture.sampler >= 0 ? model.samplers[texture.sampler] : defaultSampler;
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+						sampler.minFilter != -1 ? sampler.minFilter : GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+						sampler.magFilter != -1 ? sampler.magFilter : GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, sampler.wrapS);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, sampler.wrapT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, sampler.wrapR);
+
+		if (sampler.minFilter == GL_NEAREST_MIPMAP_NEAREST ||
+			sampler.minFilter == GL_NEAREST_MIPMAP_LINEAR ||
+			sampler.minFilter == GL_LINEAR_MIPMAP_NEAREST ||
+			sampler.minFilter == GL_LINEAR_MIPMAP_LINEAR) {
+			glGenerateMipmap(GL_TEXTURE_2D);
+		}
+	}
+
+	return textureObjects;
 }
