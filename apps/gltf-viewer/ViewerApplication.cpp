@@ -40,6 +40,10 @@ int ViewerApplication::run() {
 			glGetUniformLocation(glslProgram.glId(), "uModelViewMatrix");
 	const auto normalMatrixLocation =
 			glGetUniformLocation(glslProgram.glId(), "uNormalMatrix");
+	const auto lightDirectionLocation =
+			glGetUniformLocation(glslProgram.glId(), "uLightDirection");
+	const auto lightIntensityLocation =
+			glGetUniformLocation(glslProgram.glId(), "uLightIntensity");
 
 	tinygltf::Model model;
 	if(!loadGltfFile(model)) {
@@ -85,6 +89,10 @@ int ViewerApplication::run() {
 	std::vector<VaoRange> indexToVaoRange;
 	std::vector<GLuint> vaos = createVertexArrayObjects(model, vbos, indexToVaoRange);
 
+	glm::vec3 lightDirection(1, 1, 1);
+	glm::vec3 lightIntensity(1, 1, 1);
+	bool lightFromCamera = false;
+
 	// Setup OpenGL state for rendering
 	glEnable(GL_DEPTH_TEST);
 	glslProgram.use();
@@ -95,7 +103,6 @@ int ViewerApplication::run() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		const auto viewMatrix = camera.getViewMatrix();
-
 		// The recursive function that should draw a node
 		// We use a std::function because a simple lambda cannot be recursive
 		const std::function<void(int, const glm::mat4 &)> drawNode =
@@ -110,6 +117,17 @@ int ViewerApplication::run() {
 					glUniformMatrix4fv(modelViewMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelViewMatrix));
 					glUniformMatrix4fv(modelViewProjMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelViewProjMatrix));
 					glUniformMatrix4fv(normalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+					if (lightDirectionLocation >= 0){
+						if (lightFromCamera) {
+							glUniform3f(lightDirectionLocation, 0, 0, 1);
+						} else {
+							glm::vec3 lightDirectionInViewSpace = glm::normalize(glm::vec3(viewMatrix * glm::vec4(lightDirection, 0.)));
+							glUniform3f(lightDirectionLocation, lightDirectionInViewSpace[0], lightDirectionInViewSpace[1], lightDirectionInViewSpace[2]);
+						}
+					}
+					if (lightIntensityLocation >= 0) {
+						glUniform3f(lightIntensityLocation, lightIntensity[0], lightIntensity[1], lightIntensity[2]);
+					}
 
 					tinygltf::Mesh & mesh = model.meshes[node.mesh];
 					VaoRange & range = indexToVaoRange[node.mesh];
@@ -212,6 +230,30 @@ int ViewerApplication::run() {
 				}
 
 			}
+
+			if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen)) {
+				static float lightTheta = 0.f;
+				static float lightPhi = 0.f;
+
+				if (ImGui::SliderFloat("theta", &lightTheta, 0, glm::pi<float>()) ||
+					ImGui::SliderFloat("phi", &lightPhi, 0, 2.f * glm::pi<float>())) {
+					const auto sinPhi = glm::sin(lightPhi);
+					const auto cosPhi = glm::cos(lightPhi);
+					const auto sinTheta = glm::sin(lightTheta);
+					const auto cosTheta = glm::cos(lightTheta);
+					lightDirection = glm::vec3(sinTheta * cosPhi, cosTheta, sinTheta * sinPhi);
+				}
+
+				static glm::vec3 lightColor(1.f, 1.f, 1.f);
+				static float lightIntensityFactor = 1.f;
+
+				if (ImGui::ColorEdit3("color", (float *)&lightColor) ||
+					ImGui::InputFloat("intensity", &lightIntensityFactor)) {
+					lightIntensity = lightColor * lightIntensityFactor;
+				}
+			}
+
+			ImGui::Checkbox("light from camera", &lightFromCamera);
 			ImGui::End();
 		}
 
