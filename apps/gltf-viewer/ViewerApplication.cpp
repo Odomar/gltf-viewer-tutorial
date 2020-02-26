@@ -44,8 +44,10 @@ int ViewerApplication::run() {
 			glGetUniformLocation(glslProgram.glId(), "uLightDirection");
 	const auto lightIntensityLocation =
 			glGetUniformLocation(glslProgram.glId(), "uLightIntensity");
-	const auto baseColorTexture =
+	const auto baseColorTextureLocation =
 			glGetUniformLocation(glslProgram.glId(), "uBaseColorTexture");
+	const auto baseColorFactorLocation =
+			glGetUniformLocation(glslProgram.glId(), "uBaseColorFactor");
 
 	tinygltf::Model model;
 	if(!loadGltfFile(model)) {
@@ -121,17 +123,28 @@ int ViewerApplication::run() {
 	// Lambda function to bind material
 	const auto bindMaterial = [&](const int materialIndex) {
 		GLuint source = whiteTexture;
+		glm::vec4 baseColorFactor(1, 1, 1, 1);
 		if (materialIndex >= 0) {
 			const tinygltf::Material & material = model.materials[materialIndex];
 			const tinygltf::PbrMetallicRoughness & pbrMetallicRoughness = material.pbrMetallicRoughness;
 			if(pbrMetallicRoughness.baseColorTexture.index >= 0) {
 				const tinygltf::Texture & texture = model.textures[pbrMetallicRoughness.baseColorTexture.index];
+				baseColorFactor = glm::vec4(
+					 (float)pbrMetallicRoughness.baseColorFactor[0],
+					 (float)pbrMetallicRoughness.baseColorFactor[1],
+					 (float)pbrMetallicRoughness.baseColorFactor[2],
+					 (float)pbrMetallicRoughness.baseColorFactor[3]);
 				source = texture.source;
 			}
 		}
 		glBindTexture(GL_TEXTURE_2D, source);
 		glActiveTexture(GL_TEXTURE0);
-		glUniform1i(baseColorTexture, 0);
+		glUniform1i(baseColorTextureLocation, 0);
+		glUniform4f(baseColorFactorLocation,
+				baseColorFactor.x,
+				baseColorFactor.y,
+				baseColorFactor.z,
+				baseColorFactor.w);
 	};
 
 	// Lambda function to draw the scene
