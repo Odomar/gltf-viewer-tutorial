@@ -48,6 +48,12 @@ int ViewerApplication::run() {
 			glGetUniformLocation(glslProgram.glId(), "uBaseColorTexture");
 	const auto baseColorFactorLocation =
 			glGetUniformLocation(glslProgram.glId(), "uBaseColorFactor");
+	const auto metallicFactorLocation =
+			glGetUniformLocation(glslProgram.glId(), "uMetallicFactor");
+	const auto roughnessFactorLocation =
+			glGetUniformLocation(glslProgram.glId(), "uRoughnessFactor");
+	const auto metallicRoughnessTextureLocation =
+			glGetUniformLocation(glslProgram.glId(), "uMetallicRoughnessTexture");
 
 	tinygltf::Model model;
 	if(!loadGltfFile(model)) {
@@ -122,25 +128,44 @@ int ViewerApplication::run() {
 
 	// Lambda function to bind material
 	const auto bindMaterial = [&](const int materialIndex) {
+		GLuint sourceBaseColor = whiteTexture;
+		GLuint sourceMetallicRoughness = 0;
 		if (materialIndex >= 0) {
 			const tinygltf::Material & material = model.materials[materialIndex];
 			const tinygltf::PbrMetallicRoughness & pbrMetallicRoughness = material.pbrMetallicRoughness;
 			if(pbrMetallicRoughness.baseColorTexture.index >= 0) {
 				const tinygltf::Texture & texture = model.textures[pbrMetallicRoughness.baseColorTexture.index];
-				glBindTexture(GL_TEXTURE_2D, tos[texture.source]);
 				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, tos[texture.source]);
 				glUniform1i(baseColorTextureLocation, 0);
 				glUniform4f(baseColorFactorLocation,
-					 (float)pbrMetallicRoughness.baseColorFactor[0],
-					 (float)pbrMetallicRoughness.baseColorFactor[1],
-					 (float)pbrMetallicRoughness.baseColorFactor[2],
-					 (float)pbrMetallicRoughness.baseColorFactor[3]);
+							(float)pbrMetallicRoughness.baseColorFactor[0],
+							(float)pbrMetallicRoughness.baseColorFactor[1],
+							(float)pbrMetallicRoughness.baseColorFactor[2],
+							(float)pbrMetallicRoughness.baseColorFactor[3]);
 			}
 			else {
 				glBindTexture(GL_TEXTURE_2D, whiteTexture);
 				glActiveTexture(GL_TEXTURE0);
 				glUniform1i(baseColorTextureLocation, 0);
 				glUniform4f(baseColorFactorLocation, 1., 1., 1., 1.);
+			}
+			if(pbrMetallicRoughness.metallicRoughnessTexture.index >= 0) {
+				const tinygltf::Texture & texture = model.textures[pbrMetallicRoughness.metallicRoughnessTexture.index];
+				glActiveTexture(GL_TEXTURE1);
+				glBindTexture(GL_TEXTURE_2D, tos[texture.source]);
+				glUniform1i(metallicRoughnessTextureLocation, 1);
+				glUniform1f(metallicFactorLocation,
+							(float)pbrMetallicRoughness.metallicFactor);
+				glUniform1f(roughnessFactorLocation,
+							(float)pbrMetallicRoughness.roughnessFactor);
+			}
+			else {
+				glActiveTexture(GL_TEXTURE1);
+				glBindTexture(GL_TEXTURE_2D, whiteTexture);
+				glUniform1i(metallicRoughnessTextureLocation, 1);
+				glUniform1f(metallicFactorLocation, 0);
+				glUniform1f(roughnessFactorLocation, 0);
 			}
 		}
 	};
