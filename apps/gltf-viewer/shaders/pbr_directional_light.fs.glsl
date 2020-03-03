@@ -1,6 +1,7 @@
 #version 330
 
 in vec3 vViewSpaceNormal;
+in vec3 vViewSpacePosition;
 in vec2 vTexCoords;
 
 uniform vec3 uLightDirection;
@@ -44,7 +45,7 @@ void main()
 {
     vec3 N = normalize(vViewSpaceNormal);
     vec3 L = uLightDirection;
-    vec3 V = normalize(-vViewSpaceNormal);
+    vec3 V = normalize(-vViewSpacePosition);
     vec3 H = normalize(L + V);
 
     vec4 baseColorFromTexture = SRGBtoLINEAR(texture(uBaseColorTexture, vTexCoords));
