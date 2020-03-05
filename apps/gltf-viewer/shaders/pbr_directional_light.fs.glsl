@@ -10,10 +10,12 @@ uniform vec4 uBaseColorFactor;
 uniform float uMetallicFactor;
 uniform float uRoughnessFactor;
 uniform vec3 uEmissiveFactor;
+uniform float uOcclusionStrength;
 
 uniform sampler2D uMetallicRoughnessTexture;
 uniform sampler2D uBaseColorTexture;
 uniform sampler2D uEmissiveTexture;
+uniform sampler2D uOcclusionTexture;
 
 out vec3 fColor;
 
@@ -96,5 +98,8 @@ void main()
 
     vec4 emissive = texture(uEmissiveTexture, vTexCoords) * vec4(uEmissiveFactor, 1);
 
+    vec4 occlusion = texture(uOcclusionTexture, vTexCoords);
+
     fColor = LINEARtoSRGB((f_diffuse + f_specular) * uLightIntensity * NdotL) + emissive.xyz;
+    fColor = mix(fColor, fColor * occlusion.xyz, uOcclusionStrength);
 }
