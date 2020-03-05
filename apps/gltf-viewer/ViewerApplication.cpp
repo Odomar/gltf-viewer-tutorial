@@ -188,7 +188,7 @@ int ViewerApplication::run() {
 			else {
 				glActiveTexture(GL_TEXTURE2);
 				glBindTexture(GL_TEXTURE_2D, 0);
-				glUniform1i(metallicRoughnessTextureLocation, 2);
+				glUniform1i(emissiveTextureLocation, 2);
 				glUniform3f(emissiveFactorLocation, 0, 0, 0);
 			}
 			if(material.occlusionTexture.index >= 0) {
