@@ -100,6 +100,7 @@ void main()
 
     vec4 occlusion = texture(uOcclusionTexture, vTexCoords);
 
-    fColor = LINEARtoSRGB((f_diffuse + f_specular) * uLightIntensity * NdotL) + emissive.xyz;
+    fColor = (f_diffuse + f_specular) * uLightIntensity * NdotL + emissive.xyz;
     fColor = mix(fColor, fColor * occlusion.x, uOcclusionStrength);
+    fColor = LINEARtoSRGB(fColor);
 }

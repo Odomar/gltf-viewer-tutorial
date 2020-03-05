@@ -201,8 +201,8 @@ int ViewerApplication::run() {
 			else {
 				glActiveTexture(GL_TEXTURE3);
 				glBindTexture(GL_TEXTURE_2D, 0);
-				glUniform1i(metallicRoughnessTextureLocation, 3);
-				glUniform1f(occlusionStrengthLocation, 1);
+				glUniform1i(occlusionTextureLocation, 3);
+				glUniform1f(occlusionStrengthLocation, 0);
 			}
 		}
 	};
