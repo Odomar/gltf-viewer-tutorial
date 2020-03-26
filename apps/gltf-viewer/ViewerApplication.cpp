@@ -41,9 +41,9 @@ int ViewerApplication::run() {
 	const auto normalMatrixLocation =
 			glGetUniformLocation(glslProgram.glId(), "uNormalMatrix");
 	const auto lightDirectionLocation =
-			glGetUniformLocation(glslProgram.glId(), "uLightDirection");
+			glGetUniformLocation(glslProgram.glId(), "dirLight.uLightDirection");
 	const auto lightIntensityLocation =
-			glGetUniformLocation(glslProgram.glId(), "uLightIntensity");
+			glGetUniformLocation(glslProgram.glId(), "dirLight.uLightIntensity");
 	const auto baseColorTextureLocation =
 			glGetUniformLocation(glslProgram.glId(), "uBaseColorTexture");
 	const auto baseColorFactorLocation =
@@ -342,7 +342,7 @@ int ViewerApplication::run() {
 
 			}
 
-			if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen)) {
+			if (ImGui::CollapsingHeader("Directional light", ImGuiTreeNodeFlags_DefaultOpen)) {
 				static float lightTheta = 0.f;
 				static float lightPhi = 0.f;
 
@@ -429,7 +429,7 @@ bool ViewerApplication::loadGltfFile(tinygltf::Model & model) {
 	string warn;
 	tinygltf::TinyGLTF loader;
 
-	bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, m_gltfFilePath);
+	bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, m_gltfFilePath.string());
 
 	if (!warn.empty()) {
 		printf("Warning : %s\n", warn.c_str());

@@ -4,14 +4,25 @@ in vec3 vViewSpaceNormal;
 in vec3 vViewSpacePosition;
 in vec2 vTexCoords;
 
-uniform vec3 uLightDirection;
-uniform vec3 uLightIntensity;
+// Directional Light
+struct DirLight {
+    vec3 uLightDirection;
+	vec3 uLightIntensity;
+};  
+uniform DirLight dirLight;
+
+// Point lights (TODO)
+
+// Spot light (TODO)
+
+// Materials factors
 uniform vec4 uBaseColorFactor;
 uniform float uMetallicFactor;
 uniform float uRoughnessFactor;
 uniform vec3 uEmissiveFactor;
 uniform float uOcclusionStrength;
 
+// Textures maps
 uniform sampler2D uMetallicRoughnessTexture;
 uniform sampler2D uBaseColorTexture;
 uniform sampler2D uEmissiveTexture;
@@ -33,22 +44,19 @@ const vec3 black = vec3(0, 0, 0);
 
 // linear to sRGB approximation
 // see http://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
-vec3 LINEARtoSRGB(vec3 color)
-{
+vec3 LINEARtoSRGB(vec3 color) {
     return pow(color, vec3(INV_GAMMA));
 }
 
 // sRGB to linear approximation
 // see http://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
-vec4 SRGBtoLINEAR(vec4 srgbIn)
-{
+vec4 SRGBtoLINEAR(vec4 srgbIn) {
     return vec4(pow(srgbIn.xyz, vec3(GAMMA)), srgbIn.w);
 }
 
-void main()
-{
-    vec3 N = normalize(vViewSpaceNormal);
-    vec3 L = uLightDirection;
+vec3 calculateDirLight(DirLight light) {
+	vec3 N = normalize(vViewSpaceNormal);
+    vec3 L = light.uLightDirection;
     vec3 V = normalize(-vViewSpacePosition);
     vec3 H = normalize(L + V);
 
@@ -100,7 +108,13 @@ void main()
 
     vec4 occlusion = texture(uOcclusionTexture, vTexCoords);
 
-    fColor = (f_diffuse + f_specular) * uLightIntensity * NdotL + emissive.xyz;
-    fColor = mix(fColor, fColor * occlusion.x, uOcclusionStrength);
-    fColor = LINEARtoSRGB(fColor);
+    vec3 color = (f_diffuse + f_specular) * light.uLightIntensity * NdotL + emissive.xyz;
+    color = mix(color, color * occlusion.x, uOcclusionStrength);
+    color = LINEARtoSRGB(color);
+    return color;
+}
+
+void main() {
+	fColor = vec3(0.0f);
+    fColor += calculateDirLight(dirLight);
 }
