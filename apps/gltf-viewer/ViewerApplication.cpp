@@ -158,6 +158,8 @@ int ViewerApplication::run() {
 
 	glm::vec3 lightDirection(1, 1, 1);
 	glm::vec3 lightIntensity(1, 1, 1);
+	glm::vec3 pointLightColor(1, 1, 1);
+	glm::vec3 spotLightColor(1, 1, 1);
 	bool lightFromCamera = false;
 
 	// Setup OpenGL state for rendering
@@ -279,7 +281,7 @@ int ViewerApplication::run() {
 					glm::vec3 front = glm::vec3(0, 0, -1);
 					//front = glm::normalize(glm::vec3(viewMatrix * glm::vec4(front, 0.)));
 					glUniform3f(spotLightDirectionLocation, front.x, front.y, front.z);				
-					glUniform3f(spotLightColorLocation, 0.9f, 0.4f, 0.2f);
+					glUniform3f(spotLightColorLocation, spotLightColor.x, spotLightColor.y, spotLightColor.z);
 					glUniform1f(spotLightCutOffLocation, glm::cos(glm::radians(12.5f)));
 					glUniform1f(spotLightOuterCutOffLocation, glm::cos(glm::radians(15.0f)));
 					glUniform1f(spotLightConstantLocation, 1.0f);
@@ -289,10 +291,10 @@ int ViewerApplication::run() {
 					// TODO : mettre une ou des point lights ici
 					glm::vec3 pos(-10.f, 5.f, 0.f);
 					//glm::vec3 pos(10.f, 13.f, 1.f);
-					glm::vec3 posViewSpace = glm::normalize(glm::vec3(viewMatrix * glm::vec4(pos, 1.)));					
+					glm::vec3 posViewSpace = glm::vec3(viewMatrix * glm::vec4(pos, 1.));					
 					//std::cout << pos << std::endl;
 					glUniform3f(pointLightPositionLocation, posViewSpace.x, posViewSpace.y, posViewSpace.z);
-					glUniform3f(pointLightColorLocation, 0.1f, 1.0f, 0.1f);
+					glUniform3f(pointLightColorLocation, pointLightColor.x, pointLightColor.y, pointLightColor.z);
 					glUniform1f(pointLightConstantLocation, 1.0f);
 					glUniform1f(pointLightLinearLocation, 0.09f);
 					glUniform1f(pointLightQuadraticLocation, 0.032f);
@@ -419,10 +421,22 @@ int ViewerApplication::run() {
 				static glm::vec3 lightColor(1.f, 1.f, 1.f);
 				static float lightIntensityFactor = 1.f;
 
-				if (ImGui::ColorEdit3("color", (float *)&lightColor) ||
+				if (ImGui::ColorEdit3("directional light color", (float *)&lightColor) ||
 					ImGui::InputFloat("intensity", &lightIntensityFactor)) {
 					lightIntensity = lightColor * lightIntensityFactor;
 				}
+			}
+			if (ImGui::CollapsingHeader("Point light", ImGuiTreeNodeFlags_DefaultOpen)) {
+				static glm::vec3 lightColor(1.f, 1.f, 1.f);
+				if (ImGui::ColorEdit3("point light color", (float *)&lightColor)) {
+					pointLightColor = lightColor;
+				}				
+			}
+			if (ImGui::CollapsingHeader("Spot light", ImGuiTreeNodeFlags_DefaultOpen)) {
+				static glm::vec3 lightColor(1.f, 1.f, 1.f);
+				if (ImGui::ColorEdit3("spot light color", (float *)&lightColor)) {
+					spotLightColor = lightColor;
+				}			
 			}
 
 			ImGui::Checkbox("light from camera", &lightFromCamera);

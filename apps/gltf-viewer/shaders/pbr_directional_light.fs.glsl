@@ -281,5 +281,5 @@ void main() {
 	fColor = vec3(0.0f);
     fColor += calculateDirLight(dirLight);
     fColor += calculatePointLight(pointLight);
-    //fColor += calculateSpotLight(spotLight);
+    fColor += calculateSpotLight(spotLight);
 }
