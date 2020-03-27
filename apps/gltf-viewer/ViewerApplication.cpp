@@ -158,8 +158,20 @@ int ViewerApplication::run() {
 
 	glm::vec3 lightDirection(1, 1, 1);
 	glm::vec3 lightIntensity(1, 1, 1);
+	
 	glm::vec3 pointLightColor(1, 1, 1);
+	float pointLightConstant = 1.f;
+	float pointLightLinear = 0.09f;
+	float pointLightQuadratic = 0.032f;
+	
 	glm::vec3 spotLightColor(1, 1, 1);
+	float spotLightCutOff = glm::cos(glm::radians(12.5f));
+	float spotLightOuterCutOff = glm::cos(glm::radians(15.0f));
+	float spotLightConstant = 1.f;
+	float spotLightLinear = 0.09f;
+	float spotLightQuadratic = 0.032f;
+	
+	
 	bool lightFromCamera = false;
 
 	// Setup OpenGL state for rendering
@@ -282,11 +294,11 @@ int ViewerApplication::run() {
 					//front = glm::normalize(glm::vec3(viewMatrix * glm::vec4(front, 0.)));
 					glUniform3f(spotLightDirectionLocation, front.x, front.y, front.z);				
 					glUniform3f(spotLightColorLocation, spotLightColor.x, spotLightColor.y, spotLightColor.z);
-					glUniform1f(spotLightCutOffLocation, glm::cos(glm::radians(12.5f)));
-					glUniform1f(spotLightOuterCutOffLocation, glm::cos(glm::radians(15.0f)));
-					glUniform1f(spotLightConstantLocation, 1.0f);
-					glUniform1f(spotLightLinearLocation, 0.09f);
-					glUniform1f(spotLightQuadraticLocation, 0.032f);
+					glUniform1f(spotLightCutOffLocation, spotLightCutOff);
+					glUniform1f(spotLightOuterCutOffLocation, spotLightOuterCutOff);
+					glUniform1f(spotLightConstantLocation, spotLightConstant);
+					glUniform1f(spotLightLinearLocation, spotLightLinear);
+					glUniform1f(spotLightQuadraticLocation, spotLightQuadratic);
 					
 					// TODO : mettre une ou des point lights ici
 					glm::vec3 pos(-10.f, 5.f, 0.f);
@@ -295,9 +307,9 @@ int ViewerApplication::run() {
 					//std::cout << pos << std::endl;
 					glUniform3f(pointLightPositionLocation, posViewSpace.x, posViewSpace.y, posViewSpace.z);
 					glUniform3f(pointLightColorLocation, pointLightColor.x, pointLightColor.y, pointLightColor.z);
-					glUniform1f(pointLightConstantLocation, 1.0f);
-					glUniform1f(pointLightLinearLocation, 0.09f);
-					glUniform1f(pointLightQuadraticLocation, 0.032f);
+					glUniform1f(pointLightConstantLocation, pointLightConstant);
+					glUniform1f(pointLightLinearLocation, pointLightLinear);
+					glUniform1f(pointLightQuadraticLocation, pointLightQuadratic);
 					
 
 					tinygltf::Mesh & mesh = model.meshes[node.mesh];
@@ -421,21 +433,33 @@ int ViewerApplication::run() {
 				static glm::vec3 lightColor(1.f, 1.f, 1.f);
 				static float lightIntensityFactor = 1.f;
 
-				if (ImGui::ColorEdit3("directional light color", (float *)&lightColor) ||
+				if (ImGui::ColorEdit3("DL color", (float *)&lightColor) ||
 					ImGui::InputFloat("intensity", &lightIntensityFactor)) {
 					lightIntensity = lightColor * lightIntensityFactor;
 				}
 			}
 			if (ImGui::CollapsingHeader("Point light", ImGuiTreeNodeFlags_DefaultOpen)) {
-				static glm::vec3 lightColor(1.f, 1.f, 1.f);
-				if (ImGui::ColorEdit3("point light color", (float *)&lightColor)) {
-					pointLightColor = lightColor;
+				if (ImGui::ColorEdit3("PL color", (float *)&pointLightColor)) {
 				}				
+				if(ImGui::InputFloat("PL constant", &pointLightConstant)) {				
+				}
+				if(ImGui::InputFloat("PL linear", &pointLightLinear)) {				
+				}
+				if(ImGui::InputFloat("PL quadratic", &pointLightQuadratic)) {				
+				}
 			}
-			if (ImGui::CollapsingHeader("Spot light", ImGuiTreeNodeFlags_DefaultOpen)) {
-				static glm::vec3 lightColor(1.f, 1.f, 1.f);
-				if (ImGui::ColorEdit3("spot light color", (float *)&lightColor)) {
-					spotLightColor = lightColor;
+			if (ImGui::CollapsingHeader("Spot light", ImGuiTreeNodeFlags_DefaultOpen)) {				
+				if(ImGui::InputFloat("cutOff", &spotLightCutOff)) {				
+				}
+				if(ImGui::InputFloat("outerCutOff", &spotLightOuterCutOff)) {				
+				}
+				if(ImGui::InputFloat("SL constant", &spotLightConstant)) {				
+				}
+				if(ImGui::InputFloat("SL linear", &spotLightLinear)) {				
+				}
+				if(ImGui::InputFloat("SL quadratic", &spotLightQuadratic)) {				
+				}
+				if (ImGui::ColorEdit3("SL color", (float *)&spotLightColor)) {
 				}			
 			}
 
