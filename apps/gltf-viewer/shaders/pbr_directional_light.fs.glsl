@@ -13,7 +13,30 @@ uniform DirLight dirLight;
 
 // Point lights (TODO)
 
+struct PointLight {    
+    vec3 position;
+    vec3  color;
+    
+    float constant;
+    float linear;
+    float quadratic;  
+};
+uniform PointLight pointLight;
+
 // Spot light (TODO)
+
+struct SpotLight {    
+    vec3  position;
+    vec3  direction;
+    vec3  color;
+    float cutOff;
+    float outerCutOff;
+	
+    float constant;
+    float linear;
+    float quadratic;
+};
+uniform SpotLight spotLight;
 
 // Materials factors
 uniform vec4 uBaseColorFactor;
@@ -114,7 +137,149 @@ vec3 calculateDirLight(DirLight light) {
     return color;
 }
 
+vec3 calculatePointLight(PointLight light) {
+	vec3 N = normalize(vViewSpaceNormal);
+    vec3 L = normalize(light.position - vViewSpacePosition);
+    vec3 V = normalize(-vViewSpacePosition);
+    vec3 H = normalize(L + V);
+
+    vec4 baseColorFromTexture = SRGBtoLINEAR(texture(uBaseColorTexture, vTexCoords));
+    vec4 baseColor = baseColorFromTexture * uBaseColorFactor;
+    float NdotL = clamp(dot(N, L), 0, 1);
+    float NdotV = clamp(dot(N, V), 0, 1);
+    float NdotH = clamp(dot(N, H), 0, 1);
+    float VdotH = clamp(dot(V, H), 0, 1);
+
+    float metallic = texture(uMetallicRoughnessTexture, vTexCoords).z * uMetallicFactor;
+    float roughness = texture(uMetallicRoughnessTexture, vTexCoords).y * uRoughnessFactor;
+
+    vec3 cDiff = mix(baseColor.rgb * (1 - dielectricSpecular.r), black, metallic);
+    vec3 f0 = mix(dielectricSpecular, baseColor.rgb, metallic);
+    float a = uRoughnessFactor * roughness;
+    float a2 = a * a;
+
+    // You need to compute baseShlickFactor first
+    float baseShlickFactor = (1 - VdotH);
+    float shlickFactor = baseShlickFactor * baseShlickFactor; // power 2
+    shlickFactor *= shlickFactor; // power 4
+    shlickFactor *= baseShlickFactor; // power 5
+    vec3 F = f0 + (1 - f0) * shlickFactor;
+
+    float deno = NdotL * sqrt(NdotV * NdotV * (1 - a2) + a2) + NdotV * sqrt(NdotL* NdotL * (1 - a2) + a2);
+    float Vis;
+    if (deno == 0.) {
+        Vis = 0;
+    }
+    else {
+        Vis = 0.5 / deno;
+    }
+
+    deno = M_PI * (NdotH * NdotH * (a2 - 1) + 1) * (NdotH * NdotH * (a2 - 1) + 1);
+    float D;
+    if (deno == 0.) {
+        D = 0;
+    }
+    else {
+        D = a2 / deno;
+    }
+
+    vec3 diffuse = cDiff * M_1_PI;
+    vec3 f_diffuse = (1 - F) * diffuse;
+    vec3 f_specular = F * Vis * D;
+
+    vec4 emissive = texture(uEmissiveTexture, vTexCoords) * vec4(uEmissiveFactor, 1);
+
+    vec4 occlusion = texture(uOcclusionTexture, vTexCoords);
+    
+    // attenuation
+    float distance    = length(light.position - vViewSpacePosition);
+    float attenuation = 1.0 / (light.constant + light.linear * distance + 
+  			     light.quadratic * (distance * distance));
+  			     
+	f_diffuse *= attenuation;
+    f_specular *= attenuation;
+
+    vec3 color = (f_diffuse + f_specular) * light.color * NdotL + emissive.xyz;
+    color = mix(color, color * occlusion.x, uOcclusionStrength);
+    color = LINEARtoSRGB(color);
+    return color;
+}
+
+vec3 calculateSpotLight(SpotLight light) {
+	vec3 N = normalize(vViewSpaceNormal);
+    vec3 L = normalize(light.position - vViewSpacePosition);
+    vec3 V = normalize(-vViewSpacePosition);
+    vec3 H = normalize(L + V);
+    
+    float theta = dot(L, normalize(-light.direction)); 
+    float epsilon = (light.cutOff - light.outerCutOff);
+    float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
+
+    vec4 baseColorFromTexture = SRGBtoLINEAR(texture(uBaseColorTexture, vTexCoords));
+    vec4 baseColor = baseColorFromTexture * uBaseColorFactor;
+    float NdotL = clamp(dot(N, L), 0, 1);
+    float NdotV = clamp(dot(N, V), 0, 1);
+    float NdotH = clamp(dot(N, H), 0, 1);
+    float VdotH = clamp(dot(V, H), 0, 1);
+
+    float metallic = texture(uMetallicRoughnessTexture, vTexCoords).z * uMetallicFactor;
+    float roughness = texture(uMetallicRoughnessTexture, vTexCoords).y * uRoughnessFactor;
+
+    vec3 cDiff = mix(baseColor.rgb * (1 - dielectricSpecular.r), black, metallic);
+    vec3 f0 = mix(dielectricSpecular, baseColor.rgb, metallic);
+    float a = uRoughnessFactor * roughness;
+    float a2 = a * a;
+
+    // You need to compute baseShlickFactor first
+    float baseShlickFactor = (1 - VdotH);
+    float shlickFactor = baseShlickFactor * baseShlickFactor; // power 2
+    shlickFactor *= shlickFactor; // power 4
+    shlickFactor *= baseShlickFactor; // power 5
+    vec3 F = f0 + (1 - f0) * shlickFactor;
+
+    float deno = NdotL * sqrt(NdotV * NdotV * (1 - a2) + a2) + NdotV * sqrt(NdotL* NdotL * (1 - a2) + a2);
+    float Vis;
+    if (deno == 0.) {
+        Vis = 0;
+    }
+    else {
+        Vis = 0.5 / deno;
+    }
+
+    deno = M_PI * (NdotH * NdotH * (a2 - 1) + 1) * (NdotH * NdotH * (a2 - 1) + 1);
+    float D;
+    if (deno == 0.) {
+        D = 0;
+    }
+    else {
+        D = a2 / deno;
+    }
+
+    vec3 diffuse = cDiff * M_1_PI;
+    vec3 f_diffuse = (1 - F) * diffuse;
+    vec3 f_specular = F * Vis * D;
+
+    vec4 emissive = texture(uEmissiveTexture, vTexCoords) * vec4(uEmissiveFactor, 1);
+    vec4 occlusion = texture(uOcclusionTexture, vTexCoords);
+    
+    f_diffuse *= intensity;
+    f_specular *= intensity;
+    
+    // attenuation
+    float distance = length(light.position - vViewSpacePosition);
+    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
+    f_diffuse *= attenuation;
+    f_specular *= attenuation;
+
+    vec3 color = (f_diffuse + f_specular) * light.color * NdotL + emissive.xyz;
+    color = mix(color, color * occlusion.x, uOcclusionStrength);
+    color = LINEARtoSRGB(color);
+    return color;
+}
+
 void main() {
 	fColor = vec3(0.0f);
     fColor += calculateDirLight(dirLight);
+    fColor += calculatePointLight(pointLight);
+    //fColor += calculateSpotLight(spotLight);
 }

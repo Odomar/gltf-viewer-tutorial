@@ -40,10 +40,6 @@ int ViewerApplication::run() {
 			glGetUniformLocation(glslProgram.glId(), "uModelViewMatrix");
 	const auto normalMatrixLocation =
 			glGetUniformLocation(glslProgram.glId(), "uNormalMatrix");
-	const auto lightDirectionLocation =
-			glGetUniformLocation(glslProgram.glId(), "dirLight.uLightDirection");
-	const auto lightIntensityLocation =
-			glGetUniformLocation(glslProgram.glId(), "dirLight.uLightIntensity");
 	const auto baseColorTextureLocation =
 			glGetUniformLocation(glslProgram.glId(), "uBaseColorTexture");
 	const auto baseColorFactorLocation =
@@ -62,6 +58,40 @@ int ViewerApplication::run() {
 			glGetUniformLocation(glslProgram.glId(), "uOcclusionStrength");
 	const auto occlusionTextureLocation =
 			glGetUniformLocation(glslProgram.glId(), "uOcclusionTexture");
+	// Directional light		
+	const auto lightDirectionLocation =
+			glGetUniformLocation(glslProgram.glId(), "dirLight.uLightDirection");
+	const auto lightIntensityLocation =
+			glGetUniformLocation(glslProgram.glId(), "dirLight.uLightIntensity");
+	// Point light 
+	const auto pointLightPositionLocation =
+			glGetUniformLocation(glslProgram.glId(), "pointLight.position");
+	const auto pointLightColorLocation =
+			glGetUniformLocation(glslProgram.glId(), "pointLight.color");
+	const auto pointLightConstantLocation =
+			glGetUniformLocation(glslProgram.glId(), "pointLight.constant");
+	const auto pointLightQuadraticLocation =
+			glGetUniformLocation(glslProgram.glId(), "pointLight.quadratic");
+	const auto pointLightLinearLocation =
+			glGetUniformLocation(glslProgram.glId(), "pointLight.linear");
+	
+	// Spot light
+	const auto spotLightPositionLocation =
+			glGetUniformLocation(glslProgram.glId(), "spotLight.position");
+	const auto spotLightDirectionLocation =
+			glGetUniformLocation(glslProgram.glId(), "spotLight.direction");
+	const auto spotLightColorLocation =
+			glGetUniformLocation(glslProgram.glId(), "spotLight.color");
+	const auto spotLightCutOffLocation =
+			glGetUniformLocation(glslProgram.glId(), "spotLight.cutOff");
+	const auto spotLightOuterCutOffLocation =
+			glGetUniformLocation(glslProgram.glId(), "spotLight.outerCutOff");
+	const auto spotLightConstantLocation =
+			glGetUniformLocation(glslProgram.glId(), "spotLight.constant");
+	const auto spotLightLinearLocation =
+			glGetUniformLocation(glslProgram.glId(), "spotLight.linear");
+	const auto spotLightQuadraticLocation =
+			glGetUniformLocation(glslProgram.glId(), "spotLight.quadratic");
 
 	tinygltf::Model model;
 	if(!loadGltfFile(model)) {
@@ -238,6 +268,35 @@ int ViewerApplication::run() {
 					if (lightIntensityLocation >= 0) {
 						glUniform3f(lightIntensityLocation, lightIntensity[0], lightIntensity[1], lightIntensity[2]);
 					}
+					
+					//TODO : mettre la spot light ici
+					
+					//glm::vec3 eye = camera.eye();
+					glm::vec3 eye = glm::vec3(0, 0, 0);
+					//eye = glm::normalize(glm::vec3(viewMatrix * glm::vec4(eye, 0.)));
+					glUniform3f(spotLightPositionLocation, eye.x, eye.y, eye.z);				
+					//glm::vec3 front = camera.front();
+					glm::vec3 front = glm::vec3(0, 0, -1);
+					//front = glm::normalize(glm::vec3(viewMatrix * glm::vec4(front, 0.)));
+					glUniform3f(spotLightDirectionLocation, front.x, front.y, front.z);				
+					glUniform3f(spotLightColorLocation, 0.9f, 0.4f, 0.2f);
+					glUniform1f(spotLightCutOffLocation, glm::cos(glm::radians(12.5f)));
+					glUniform1f(spotLightOuterCutOffLocation, glm::cos(glm::radians(15.0f)));
+					glUniform1f(spotLightConstantLocation, 1.0f);
+					glUniform1f(spotLightLinearLocation, 0.09f);
+					glUniform1f(spotLightQuadraticLocation, 0.032f);
+					
+					// TODO : mettre une ou des point lights ici
+					glm::vec3 pos(-10.f, 5.f, 0.f);
+					//glm::vec3 pos(10.f, 13.f, 1.f);
+					glm::vec3 posViewSpace = glm::normalize(glm::vec3(viewMatrix * glm::vec4(pos, 1.)));					
+					//std::cout << pos << std::endl;
+					glUniform3f(pointLightPositionLocation, posViewSpace.x, posViewSpace.y, posViewSpace.z);
+					glUniform3f(pointLightColorLocation, 0.1f, 1.0f, 0.1f);
+					glUniform1f(pointLightConstantLocation, 1.0f);
+					glUniform1f(pointLightLinearLocation, 0.09f);
+					glUniform1f(pointLightQuadraticLocation, 0.032f);
+					
 
 					tinygltf::Mesh & mesh = model.meshes[node.mesh];
 					VaoRange & range = indexToVaoRange[node.mesh];
@@ -354,6 +413,8 @@ int ViewerApplication::run() {
 					const auto cosTheta = glm::cos(lightTheta);
 					lightDirection = glm::vec3(sinTheta * cosPhi, cosTheta, sinTheta * sinPhi);
 				}
+				ImGui::Text("light dir: %.3f %.3f %.3f", lightDirection.x, lightDirection.y,
+							lightDirection.z);
 
 				static glm::vec3 lightColor(1.f, 1.f, 1.f);
 				static float lightIntensityFactor = 1.f;
