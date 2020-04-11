@@ -58,11 +58,18 @@ int ViewerApplication::run() {
 			glGetUniformLocation(glslProgram.glId(), "uOcclusionStrength");
 	const auto occlusionTextureLocation =
 			glGetUniformLocation(glslProgram.glId(), "uOcclusionTexture");
+	const auto normalTextureLocation =
+			glGetUniformLocation(glslProgram.glId(), "uNormalTexture");
+	const auto normalScaleLocation =
+			glGetUniformLocation(glslProgram.glId(), "uNormalScale");
+
+
 	// Directional light		
 	const auto lightDirectionLocation =
 			glGetUniformLocation(glslProgram.glId(), "dirLight.uLightDirection");
 	const auto lightIntensityLocation =
 			glGetUniformLocation(glslProgram.glId(), "dirLight.uLightIntensity");
+
 	// Point light 
 	const auto pointLightPositionLocation =
 			glGetUniformLocation(glslProgram.glId(), "pointLight.position");
@@ -247,6 +254,19 @@ int ViewerApplication::run() {
 				glBindTexture(GL_TEXTURE_2D, 0);
 				glUniform1i(occlusionTextureLocation, 3);
 				glUniform1f(occlusionStrengthLocation, 0);
+			}
+			if(material.normalTexture.index >= 0) {
+				const tinygltf::Texture & texture = model.textures[material.normalTexture.index];
+				glActiveTexture(GL_TEXTURE4);
+				glBindTexture(GL_TEXTURE_2D, tos[texture.source]);
+				glUniform1i(normalTextureLocation, 4);
+				glUniform1f(normalScaleLocation, material.normalTexture.scale);
+			}
+			else {
+				glActiveTexture(GL_TEXTURE4);
+				glBindTexture(GL_TEXTURE_2D, 0);
+				glUniform1i(normalTextureLocation, 4);
+				glUniform1f(normalScaleLocation, 0);
 			}
 		}
 	};

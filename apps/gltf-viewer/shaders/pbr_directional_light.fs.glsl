@@ -44,12 +44,14 @@ uniform float uMetallicFactor;
 uniform float uRoughnessFactor;
 uniform vec3 uEmissiveFactor;
 uniform float uOcclusionStrength;
+uniform float uNormalScale;
 
 // Textures maps
 uniform sampler2D uMetallicRoughnessTexture;
 uniform sampler2D uBaseColorTexture;
 uniform sampler2D uEmissiveTexture;
 uniform sampler2D uOcclusionTexture;
+uniform sampler2D uNormalTexture;
 
 out vec3 fColor;
 
@@ -78,7 +80,9 @@ vec4 SRGBtoLINEAR(vec4 srgbIn) {
 }
 
 vec3 calculateDirLight(DirLight light) {
-	vec3 N = normalize(vViewSpaceNormal);
+    vec3 normal = texture(uNormalTexture, vTexCoords).rgb;
+    normal = normalize(normal * 2.0 - 1.0) * uNormalScale;
+    vec3 N = normalize(normal);
     vec3 L = light.uLightDirection;
     vec3 V = normalize(-vViewSpacePosition);
     vec3 H = normalize(L + V);
@@ -138,7 +142,9 @@ vec3 calculateDirLight(DirLight light) {
 }
 
 vec3 calculatePointLight(PointLight light) {
-	vec3 N = normalize(vViewSpaceNormal);
+    vec3 normal = texture(uNormalTexture, vTexCoords).rgb;
+    normal = normalize(normal * 2.0 - 1.0) * uNormalScale;
+    vec3 N = normalize(normal);
     vec3 L = normalize(light.position - vViewSpacePosition);
     vec3 V = normalize(-vViewSpacePosition);
     vec3 H = normalize(L + V);
@@ -206,7 +212,9 @@ vec3 calculatePointLight(PointLight light) {
 }
 
 vec3 calculateSpotLight(SpotLight light) {
-	vec3 N = normalize(vViewSpaceNormal);
+    vec3 normal = texture(uNormalTexture, vTexCoords).rgb;
+    normal = normalize(normal * 2.0 - 1.0) * uNormalScale;
+    vec3 N = normalize(normal);
     vec3 L = normalize(light.position - vViewSpacePosition);
     vec3 V = normalize(-vViewSpacePosition);
     vec3 H = normalize(L + V);
