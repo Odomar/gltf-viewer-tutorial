@@ -20,6 +20,7 @@ using namespace std;
 const GLuint VERTEX_ATTRIB_POSITION_IDX = 0;
 const GLuint VERTEX_ATTRIB_NORMAL_IDX = 1;
 const GLuint VERTEX_ATTRIB_TEXCOORD0_IDX = 2;
+const GLuint VERTEX_ATTRIB_TANGENT_IDX = 3;
 
 void keyCallback(
 		GLFWwindow * window, int key, int scancode, int action, int mods) {
@@ -650,6 +651,28 @@ ViewerApplication::createVertexArrayObjects(const tinygltf::Model & model, const
 
 					const auto byteOffset = accessor.byteOffset + bufferView.byteOffset;// Compute the total byte offset using the accessor and the buffer view
 					glVertexAttribPointer(VERTEX_ATTRIB_TEXCOORD0_IDX, accessor.type, accessor.componentType, GL_FALSE, bufferView.byteStride, (void *)byteOffset);
+					// Remember size is obtained with accessor.type, type is obtained with accessor.componentType.
+					// The stride is obtained in the bufferView, normalized is always GL_FALSE, and pointer is the byteOffset (don't forget the cast).
+				}
+			}
+
+			{ // I'm opening a scope because I want to reuse the variable iterator in the code for TANGENT and BITANGENT
+				const auto iterator = model.meshes[i].primitives[j].attributes.find("TANGENT");
+				if (iterator != end(model.meshes[i].primitives[j].attributes)) { // If "TANGENT" has been found in the map
+					// (*iterator).first is the key "TANGENT", (*iterator).second is the value, ie. the index of the accessor for this attribute
+					const int accessorIdx = (*iterator).second;
+					const tinygltf::Accessor &accessor = model.accessors[accessorIdx]; // get the correct tinygltf::Accessor from model.accessors
+					const tinygltf::BufferView &bufferView = model.bufferViews[accessor.bufferView]; // get the correct tinygltf::BufferView from model.bufferViews.
+					const int bufferIdx = bufferView.buffer; // get the index of the buffer used by the bufferView
+					const GLuint bufferObject = bufferObjects[bufferIdx]; // get the correct buffer object from the buffer index
+
+					// Enable the vertex attrib array corresponding to TANGENT with glEnableVertexAttribArray
+					glEnableVertexAttribArray(VERTEX_ATTRIB_TANGENT_IDX);
+					// Bind the buffer object to GL_ARRAY_BUFFER
+					glBindBuffer(GL_ARRAY_BUFFER, bufferObject);
+
+					const auto byteOffset = accessor.byteOffset + bufferView.byteOffset;// Compute the total byte offset using the accessor and the buffer view
+					glVertexAttribPointer(VERTEX_ATTRIB_TANGENT_IDX, accessor.type, accessor.componentType, GL_FALSE, bufferView.byteStride, (void *)byteOffset);
 					// Remember size is obtained with accessor.type, type is obtained with accessor.componentType.
 					// The stride is obtained in the bufferView, normalized is always GL_FALSE, and pointer is the byteOffset (don't forget the cast).
 				}

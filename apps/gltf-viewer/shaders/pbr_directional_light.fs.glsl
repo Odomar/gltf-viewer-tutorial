@@ -3,6 +3,8 @@
 in vec3 vViewSpaceNormal;
 in vec3 vViewSpacePosition;
 in vec2 vTexCoords;
+in vec3 vTangentViewSpacePosition;
+in vec3 vTangentFragPos;
 
 // Directional Light
 struct DirLight {
@@ -84,7 +86,7 @@ vec3 calculateDirLight(DirLight light) {
     normal = normalize(normal * 2.0 - 1.0) * uNormalScale;
     vec3 N = normalize(normal);
     vec3 L = light.uLightDirection;
-    vec3 V = normalize(-vViewSpacePosition);
+    vec3 V = normalize(-vTangentViewSpacePosition);
     vec3 H = normalize(L + V);
 
     vec4 baseColorFromTexture = SRGBtoLINEAR(texture(uBaseColorTexture, vTexCoords));
@@ -145,8 +147,8 @@ vec3 calculatePointLight(PointLight light) {
     vec3 normal = texture(uNormalTexture, vTexCoords).rgb;
     normal = normalize(normal * 2.0 - 1.0) * uNormalScale;
     vec3 N = normalize(normal);
-    vec3 L = normalize(light.position - vViewSpacePosition);
-    vec3 V = normalize(-vViewSpacePosition);
+    vec3 L = normalize(light.position - vTangentViewSpacePosition);
+    vec3 V = normalize(-vTangentViewSpacePosition);
     vec3 H = normalize(L + V);
 
     vec4 baseColorFromTexture = SRGBtoLINEAR(texture(uBaseColorTexture, vTexCoords));
@@ -198,7 +200,7 @@ vec3 calculatePointLight(PointLight light) {
     vec4 occlusion = texture(uOcclusionTexture, vTexCoords);
     
     // attenuation
-    float distance    = length(light.position - vViewSpacePosition);
+    float distance    = length(light.position - vTangentViewSpacePosition);
     float attenuation = 1.0 / (light.constant + light.linear * distance + 
   			     light.quadratic * (distance * distance));
   			     
@@ -215,8 +217,8 @@ vec3 calculateSpotLight(SpotLight light) {
     vec3 normal = texture(uNormalTexture, vTexCoords).rgb;
     normal = normalize(normal * 2.0 - 1.0) * uNormalScale;
     vec3 N = normalize(normal);
-    vec3 L = normalize(light.position - vViewSpacePosition);
-    vec3 V = normalize(-vViewSpacePosition);
+    vec3 L = normalize(light.position - vTangentViewSpacePosition);
+    vec3 V = normalize(-vTangentViewSpacePosition);
     vec3 H = normalize(L + V);
     
     float theta = dot(L, normalize(-light.direction)); 
@@ -274,7 +276,7 @@ vec3 calculateSpotLight(SpotLight light) {
     f_specular *= intensity;
     
     // attenuation
-    float distance = length(light.position - vViewSpacePosition);
+    float distance = length(light.position - vTangentViewSpacePosition);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
     f_diffuse *= attenuation;
     f_specular *= attenuation;
