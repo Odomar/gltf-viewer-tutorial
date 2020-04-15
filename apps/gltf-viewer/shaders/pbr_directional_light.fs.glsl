@@ -11,7 +11,7 @@ struct DirLight {
     vec3 uLightDirection;
 	vec3 uLightIntensity;
 };  
-uniform DirLight dirLight;
+in DirLight vDirLight;
 
 // Point lights (TODO)
 
@@ -23,7 +23,7 @@ struct PointLight {
     float linear;
     float quadratic;  
 };
-uniform PointLight pointLight;
+in PointLight vPointLight;
 
 // Spot light (TODO)
 
@@ -38,7 +38,7 @@ struct SpotLight {
     float linear;
     float quadratic;
 };
-uniform SpotLight spotLight;
+in SpotLight vSpotLight;
 
 // Materials factors
 uniform vec4 uBaseColorFactor;
@@ -289,7 +289,7 @@ vec3 calculateSpotLight(SpotLight light) {
 
 void main() {
 	fColor = vec3(0.0f);
-    fColor += calculateDirLight(dirLight);
-    fColor += calculatePointLight(pointLight);
-    fColor += calculateSpotLight(spotLight);
+    fColor += calculateDirLight(vDirLight);
+    fColor += calculatePointLight(vPointLight);
+    fColor += calculateSpotLight(vSpotLight);
 }
